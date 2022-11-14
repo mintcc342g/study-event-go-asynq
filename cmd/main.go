@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"net/http"
 	"os"
 	"os/signal"
 	"runtime"
@@ -16,6 +17,7 @@ import (
 
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/hibiken/asynq"
+	"github.com/hibiken/asynqmon"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 )
@@ -58,7 +60,12 @@ func main() {
 	}
 
 	if err := initAsynqServer(r, configs, repoContainer); err != nil {
-		r.Logger.Error("initHandler Error")
+		r.Logger.Error("initAsynqServer Error")
+		os.Exit(1)
+	}
+
+	if err := initAsynqWebServer(r, configs); err != nil {
+		r.Logger.Error("initAsynqWebServer Error")
 		os.Exit(1)
 	}
 
@@ -130,6 +137,26 @@ func initAsynqServer(r *echo.Echo, configs *conf.ViperConfig, repoContainer *con
 	go func() {
 		if err := srv.Run(mux); err != nil {
 			r.Logger.Fatal("asynq server error", err)
+			panic(err)
+		}
+	}()
+
+	return nil
+}
+
+func initAsynqWebServer(r *echo.Echo, configs *conf.ViperConfig) error {
+	h := asynqmon.New(asynqmon.Options{
+		RootPath:     "/monitoring", // RootPath specifies the root for asynqmon app
+		RedisConnOpt: asynq.RedisClientOpt{Addr: configs.GetString("redis_host")},
+	})
+
+	// Note: We need the tailing slash when using net/http.ServeMux.
+	http.Handle(h.RootPath()+"/", h)
+
+	// Go to http://localhost:8080/monitoring to see asynqmon homepage.
+	go func() {
+		if err := http.ListenAndServe(configs.GetString("asynqmon_host"), nil); err != nil {
+			r.Logger.Fatal("asynqmon error", err)
 			panic(err)
 		}
 	}()

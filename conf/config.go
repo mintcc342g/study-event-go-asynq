@@ -14,10 +14,11 @@ var Configs *ViperConfig
 
 func init() {
 	Configs = readConfig(map[string]interface{}{
-		"debug_route": false,
-		"debug_db":    true,
-		"port":        4569,
-		"redis_host":  "localhost:6379",
+		"debug_route":   false,
+		"debug_db":      true,
+		"port":          4569,
+		"redis_host":    "localhost:6379",
+		"asynqmon_host": "localhost:8080",
 		// "broker_host": "redis://localhost:6379",
 		// "db":          "mysql",
 		// "db_host":     "localhost",
