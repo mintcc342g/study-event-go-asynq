@@ -21,7 +21,7 @@ func NewAnnouncementsService(announcementRepo interfaces.AnnouncementRepository,
 	}
 }
 
-// Schedule a message to announce. The msg would be announced N sec after scheduling it.
+// Schedule a message to announce.
 func (a *AnnouncementService) Schedule(ctx context.Context, announcementDTO dto.Announcement) (*dto.Announcement, error) {
 	announcement, err := domains.NewAnnouncement(ctx, announcementDTO)
 	if err != nil {
