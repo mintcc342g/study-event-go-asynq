@@ -64,9 +64,11 @@ func main() {
 		os.Exit(1)
 	}
 
-	if err := initAsynqWebServer(r, configs); err != nil {
-		r.Logger.Error("initAsynqWebServer Error")
-		os.Exit(1)
+	if !configs.GetBool("use_docker_compose") {
+		if err := initAsynqWebUIServer(r, configs); err != nil {
+			r.Logger.Error("initAsynqWebUIServer Error")
+			os.Exit(1)
+		}
 	}
 
 	startServer(configs, r)
@@ -144,7 +146,7 @@ func initAsynqServer(r *echo.Echo, configs *conf.ViperConfig, repoContainer *con
 	return nil
 }
 
-func initAsynqWebServer(r *echo.Echo, configs *conf.ViperConfig) error {
+func initAsynqWebUIServer(r *echo.Echo, configs *conf.ViperConfig) error {
 	h := asynqmon.New(asynqmon.Options{
 		RootPath:     "/monitoring", // RootPath specifies the root for asynqmon app
 		RedisConnOpt: asynq.RedisClientOpt{Addr: configs.GetString("redis_host")},

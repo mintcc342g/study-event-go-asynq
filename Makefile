@@ -37,7 +37,7 @@ all_info: ; $(info $(M) build all steps…) @
 endif
 
 .PHONY: build
-build: vendor ;
+build: ;
 ifeq ($(OS),Windows_NT)
 	@echo building executable...
 else
@@ -46,15 +46,3 @@ endif
 	$Q cd $(BASE)/cmd && $(GOBUILD) build \
 		$(BUILDTAG) \
 		-o $(BIN)/$(PACKAGE)
-
-
-# Test
-
-.PHONY: test
-test: mock ;
-ifeq ($(OS),Windows_NT)
-	@echo run test...
-else
-	$(info $(M) run test…) @
-endif
-	$Q cd $(BASE) && $(GO) test -p 1 -failfast $(GORACE) -cover ./...

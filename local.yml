@@ -1,0 +1,35 @@
+version: '3'
+services:
+  study-server-1:
+    build: .
+    # cannot use range ports and make replicas because of a docker-compose bug.
+    # see https://github.com/docker/compose/issues/7188.
+    # deploy:
+    #   mode: replicated
+    #   replicas: 2
+    # ports:
+    #   - "14568-14569:4569"
+    ports:
+      - "14568:4569"
+    environment:
+      - REDIS_HOST=redis:6379
+      - ASYNQMON_HOST=ui:8080
+      - USE_DOCKER_COMPOSE=true
+  study-server-2:
+    build: .
+    ports:
+      - "14569:4569"
+    environment:
+      - REDIS_HOST=redis:6379
+      - ASYNQMON_HOST=ui:8080
+      - USE_DOCKER_COMPOSE=true
+  ui:
+    image: hibiken/asynqmon
+    environment:
+      - REDIS_ADDR=redis:6379
+    ports:
+      - "8080:8080"
+  redis:
+    image: redis:latest
+    ports:
+      - "6379:6379"
