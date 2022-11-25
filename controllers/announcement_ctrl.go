@@ -3,6 +3,7 @@ package controllers
 import (
 	"net/http"
 	"strings"
+	"time"
 
 	"study-event-go-asynq/applications"
 	"study-event-go-asynq/applications/dto"
@@ -29,9 +30,10 @@ func (a *AnnouncementController) Schedule(c echo.Context) (err error) {
 	ctx := c.Request().Context()
 
 	var request struct {
-		From    string `json:"from"`
-		Message string `json:"message"`
-		Seconds int64  `json:"seconds"`
+		From     string    `json:"from"`
+		Message  string    `json:"message"`
+		Seconds  int64     `json:"seconds"`
+		Deadline time.Time `json:"deadline"`
 	}
 	if err = c.Bind(&request); err != nil {
 		c.Logger().Error("AnnouncementController Bind", "err", err)
@@ -39,9 +41,10 @@ func (a *AnnouncementController) Schedule(c echo.Context) (err error) {
 	}
 
 	announcementDTO := dto.Announcement{
-		Message: strings.TrimSpace(request.Message),
-		From:    request.From,
-		Seconds: request.Seconds,
+		Message:  strings.TrimSpace(request.Message),
+		From:     request.From,
+		Seconds:  request.Seconds,
+		Deadline: request.Deadline,
 	}
 
 	res, err := a.announcementSvc.Schedule(ctx, announcementDTO)

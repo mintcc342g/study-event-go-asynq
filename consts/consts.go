@@ -1,6 +1,6 @@
 package consts
 
 const (
-	AnnouncementTaskKey        = "async:announcement"
-	AnnouncementTimeoutTaskKey = "async:announcement:timeout"
+	AnnouncementTaskKey     = "async:announcement"
+	AnnouncementTimeTaskKey = "async:announcement:time"
 )

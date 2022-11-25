@@ -45,3 +45,15 @@ func (a *asynqTaskRepository) SendTaskWithTimeout(ctx context.Context, key strin
 
 	return nil
 }
+
+func (a *asynqTaskRepository) SendTaskWithDeadline(ctx context.Context, key string, payload []byte, time time.Time) error {
+	taskInfo, err := a.client.EnqueueContext(ctx, asynq.NewTask(key, payload), asynq.Deadline(time))
+	if err != nil {
+		zap.S().Errorw("Fail to send a task with deadline", "err", err)
+		return err
+	}
+
+	zap.S().Infow("Success to send a task with deadline", "task_id", taskInfo.ID, "task_state", taskInfo.State)
+
+	return nil
+}

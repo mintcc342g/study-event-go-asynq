@@ -38,7 +38,7 @@ func (a *AnnouncementWorker) Announce(ctx context.Context, t *asynq.Task) error 
 	return nil
 }
 
-func (a *AnnouncementWorker) AnnounceWithTimeout(ctx context.Context, t *asynq.Task) error {
+func (a *AnnouncementWorker) AnnounceWithTime(ctx context.Context, t *asynq.Task) error {
 	var announcement domains.Announcement
 	if err := json.Unmarshal(t.Payload(), &announcement); err != nil {
 		return err
@@ -46,13 +46,13 @@ func (a *AnnouncementWorker) AnnounceWithTimeout(ctx context.Context, t *asynq.T
 
 	ch := make(chan error, 1)
 	go func() {
-		ch <- a.announceForTimeout(ctx, announcement)
+		ch <- a.announceForTime(ctx, announcement)
 	}()
 
 	select {
 	case <-ctx.Done():
 		err := ctx.Err()
-		zap.S().Errorw("task is not completed within the time", "announcement_id", announcement.ID, "timeout", announcement.Timeout, "err", err.Error())
+		zap.S().Errorw("task is not completed within the time", "announcement_id", announcement.ID, "timeout", announcement.Timeout, "deadline", announcement.Deadline, "err", err.Error())
 		return err
 
 	case taskErr := <-ch:
@@ -63,7 +63,7 @@ func (a *AnnouncementWorker) AnnounceWithTimeout(ctx context.Context, t *asynq.T
 	}
 }
 
-func (a *AnnouncementWorker) announceForTimeout(ctx context.Context, announcement domains.Announcement) error {
+func (a *AnnouncementWorker) announceForTime(ctx context.Context, announcement domains.Announcement) error {
 	println("[ANNOUNCEMENT]", fmt.Sprintf("GOT A NEW ANNOUNCEMENT FROM %s.", announcement.From))
 	time.Sleep(1 * time.Second)
 	println("[ANNOUNCEMENT]", "THE MESSAGE IS ...")
