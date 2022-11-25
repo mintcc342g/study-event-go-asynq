@@ -30,7 +30,7 @@ func readConfig(defaults map[string]interface{}) *ViperConfig {
 		v.SetDefault(key, value)
 	}
 
-	v.AddConfigPath("./conf")
+	v.AddConfigPath(".././conf")
 	v.AutomaticEnv()
 	v.SetConfigName(".env.dev")
 
