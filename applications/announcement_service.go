@@ -10,14 +10,14 @@ import (
 // AnnouncementService ...
 type AnnouncementService struct {
 	announcementRepo interfaces.AnnouncementRepository
-	eventRepo        interfaces.EventRepository
+	taskRepo         interfaces.TaskRepository
 }
 
 // NewAnnouncementsService ...
-func NewAnnouncementsService(announcementRepo interfaces.AnnouncementRepository, eventRepo interfaces.EventRepository) *AnnouncementService {
+func NewAnnouncementsService(announcementRepo interfaces.AnnouncementRepository, taskRepo interfaces.TaskRepository) *AnnouncementService {
 	return &AnnouncementService{
 		announcementRepo: announcementRepo,
-		eventRepo:        eventRepo,
+		taskRepo:         taskRepo,
 	}
 }
 
@@ -38,7 +38,7 @@ func (a *AnnouncementService) Schedule(ctx context.Context, announcementDTO dto.
 		return nil, err
 	}
 
-	if err = a.eventRepo.SendTask(ctx, announcement.TaskKey(), payload); err != nil {
+	if err = a.taskRepo.SendTask(ctx, announcement.TaskKey(), payload); err != nil {
 		return nil, err
 	}
 
