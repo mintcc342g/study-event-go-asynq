@@ -40,7 +40,11 @@ func (a *AnnouncementService) Schedule(ctx context.Context, announcementDTO dto.
 	}
 
 	if announcement.WithTimeout() {
-		if err = a.taskRepo.SendTaskWithTimeout(ctx, consts.AnnouncementTimeoutTaskKey, payload, announcement.Timeout); err != nil {
+		if err = a.taskRepo.SendTaskWithTimeout(ctx, consts.AnnouncementTimeTaskKey, payload, announcement.Timeout); err != nil {
+			return nil, err
+		}
+	} else if announcement.WithDeadline() {
+		if err = a.taskRepo.SendTaskWithDeadline(ctx, consts.AnnouncementTimeTaskKey, payload, announcement.Deadline); err != nil {
 			return nil, err
 		}
 	} else {
@@ -50,8 +54,10 @@ func (a *AnnouncementService) Schedule(ctx context.Context, announcementDTO dto.
 	}
 
 	return &dto.Announcement{
-		ID:      announcement.ID,
-		From:    announcement.From,
-		Message: announcement.Message,
+		ID:       announcement.ID,
+		From:     announcement.From,
+		Message:  announcement.Message,
+		Seconds:  announcementDTO.Seconds,
+		Deadline: announcement.Deadline,
 	}, nil
 }
