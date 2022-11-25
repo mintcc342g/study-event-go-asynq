@@ -5,13 +5,14 @@ import (
 	"encoding/json"
 	"errors"
 	"study-event-go-asynq/applications/dto"
-	"study-event-go-asynq/consts"
+	"time"
 )
 
 type Announcement struct {
 	ID      uint64
 	From    string
 	Message string
+	Timeout time.Duration
 }
 
 func NewAnnouncement(ctx context.Context, announcementDTO dto.Announcement) (*Announcement, error) {
@@ -22,6 +23,7 @@ func NewAnnouncement(ctx context.Context, announcementDTO dto.Announcement) (*An
 	return &Announcement{
 		From:    announcementDTO.From,
 		Message: announcementDTO.Message,
+		Timeout: time.Duration(announcementDTO.Seconds * int64(time.Second)),
 	}, nil
 }
 
@@ -29,6 +31,6 @@ func (a *Announcement) NewEventPayload() ([]byte, error) {
 	return json.Marshal(a)
 }
 
-func (a *Announcement) TaskKey() string {
-	return consts.AnnouncementTaskKey
+func (a *Announcement) WithTimeout() bool {
+	return a.Timeout != 0 // timeout can be set a negative number for test
 }

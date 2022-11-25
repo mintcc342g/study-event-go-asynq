@@ -3,6 +3,7 @@ package applications
 import (
 	"context"
 	"study-event-go-asynq/applications/dto"
+	"study-event-go-asynq/consts"
 	"study-event-go-asynq/domains"
 	"study-event-go-asynq/domains/interfaces"
 )
@@ -38,8 +39,14 @@ func (a *AnnouncementService) Schedule(ctx context.Context, announcementDTO dto.
 		return nil, err
 	}
 
-	if err = a.taskRepo.SendTask(ctx, announcement.TaskKey(), payload); err != nil {
-		return nil, err
+	if announcement.WithTimeout() {
+		if err = a.taskRepo.SendTaskWithTimeout(ctx, consts.AnnouncementTimeoutTaskKey, payload, announcement.Timeout); err != nil {
+			return nil, err
+		}
+	} else {
+		if err = a.taskRepo.SendTask(ctx, consts.AnnouncementTaskKey, payload); err != nil {
+			return nil, err
+		}
 	}
 
 	return &dto.Announcement{

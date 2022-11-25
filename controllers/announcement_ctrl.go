@@ -31,6 +31,7 @@ func (a *AnnouncementController) Schedule(c echo.Context) (err error) {
 	var request struct {
 		From    string `json:"from"`
 		Message string `json:"message"`
+		Seconds int64  `json:"seconds"`
 	}
 	if err = c.Bind(&request); err != nil {
 		c.Logger().Error("AnnouncementController Bind", "err", err)
@@ -40,6 +41,7 @@ func (a *AnnouncementController) Schedule(c echo.Context) (err error) {
 	announcementDTO := dto.Announcement{
 		Message: strings.TrimSpace(request.Message),
 		From:    request.From,
+		Seconds: request.Seconds,
 	}
 
 	res, err := a.announcementSvc.Schedule(ctx, announcementDTO)
