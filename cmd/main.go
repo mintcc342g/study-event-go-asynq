@@ -20,6 +20,7 @@ import (
 	"github.com/hibiken/asynqmon"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
+	"go.uber.org/zap"
 )
 
 const (
@@ -43,6 +44,9 @@ func init() {
 }
 
 func main() {
+	logger, _ := zap.NewDevelopment()
+	zap.ReplaceGlobals(logger)
+
 	configs := conf.Configs
 
 	r := echoInit(configs)
@@ -135,6 +139,7 @@ func initAsynqServer(r *echo.Echo, configs *conf.ViperConfig, repoContainer *con
 
 	mux := asynq.NewServeMux()
 	mux.HandleFunc(consts.AnnouncementTaskKey, announcementWorker.Announce)
+	mux.HandleFunc(consts.AnnouncementTimeoutTaskKey, announcementWorker.AnnounceWithTimeout)
 
 	go func() {
 		if err := srv.Run(mux); err != nil {

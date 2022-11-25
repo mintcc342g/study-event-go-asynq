@@ -3,12 +3,14 @@ package workers
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"study-event-go-asynq/domains"
 	"study-event-go-asynq/domains/interfaces"
 	"time"
 
 	"github.com/hibiken/asynq"
+	"go.uber.org/zap"
 )
 
 type AnnouncementWorker struct {
@@ -34,4 +36,39 @@ func (a *AnnouncementWorker) Announce(ctx context.Context, t *asynq.Task) error 
 	println("[ANNOUNCEMENT]", "\""+announcement.Message+"\"")
 
 	return nil
+}
+
+func (a *AnnouncementWorker) AnnounceWithTimeout(ctx context.Context, t *asynq.Task) error {
+	var announcement domains.Announcement
+	if err := json.Unmarshal(t.Payload(), &announcement); err != nil {
+		return err
+	}
+
+	ch := make(chan error, 1)
+	go func() {
+		ch <- a.announceForTimeout(ctx, announcement)
+	}()
+
+	select {
+	case <-ctx.Done():
+		err := ctx.Err()
+		zap.S().Errorw("task is not completed within the time", "announcement_id", announcement.ID, "timeout", announcement.Timeout, "err", err.Error())
+		return err
+
+	case taskErr := <-ch:
+		if taskErr != nil {
+			zap.S().Errorw("announce error", "err", taskErr)
+		}
+		return nil
+	}
+}
+
+func (a *AnnouncementWorker) announceForTimeout(ctx context.Context, announcement domains.Announcement) error {
+	println("[ANNOUNCEMENT]", fmt.Sprintf("GOT A NEW ANNOUNCEMENT FROM %s.", announcement.From))
+	time.Sleep(1 * time.Second)
+	println("[ANNOUNCEMENT]", "THE MESSAGE IS ...")
+	time.Sleep(1 * time.Second)
+	println("[ANNOUNCEMENT]", "\""+announcement.Message+"\"")
+
+	return errors.New("done~") // for a test
 }
