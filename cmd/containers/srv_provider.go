@@ -11,7 +11,7 @@ type ApplicationContainer struct {
 
 func newApplicationContainer(infraContainer *InfrastructureContainer) *ApplicationContainer {
 	return &ApplicationContainer{
-		AnnouncementSvc: applications.NewAnnouncementsService(infraContainer.AnnouncementRepo, infraContainer.EventRepo),
+		AnnouncementSvc: applications.NewAnnouncementsService(infraContainer.AnnouncementRepo, infraContainer.TaskRepo),
 	}
 }
 

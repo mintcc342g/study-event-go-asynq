@@ -10,13 +10,13 @@ import (
 // InfrastructureContainer ...
 type InfrastructureContainer struct {
 	AnnouncementRepo interfaces.AnnouncementRepository
-	EventRepo        interfaces.EventRepository
+	TaskRepo         interfaces.TaskRepository
 }
 
 func newInfrastructureContainer(client *asynq.Client) *InfrastructureContainer {
 	return &InfrastructureContainer{
 		AnnouncementRepo: infrastructures.NewGormAnnouncementRepository(),
-		EventRepo:        infrastructures.NewEventRepository(client),
+		TaskRepo:         infrastructures.NewTaskRepository(client),
 	}
 }
 
