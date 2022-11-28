@@ -1,9 +1,8 @@
 package conf
 
 import (
-	"fmt"
-
 	"github.com/spf13/viper"
+	"go.uber.org/zap"
 )
 
 const (
@@ -46,7 +45,7 @@ func readConfig(defaults map[string]interface{}) *ViperConfig {
 
 	err := v.ReadInConfig()
 	if err != nil {
-		fmt.Println("conf", "readConfig", "Error", err) // TODO: logger
+		zap.S().Errorw("fail to read configs", "err", err)
 		return nil
 	}
 
