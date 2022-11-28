@@ -21,6 +21,8 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"go.uber.org/zap"
+	"gorm.io/driver/mysql"
+	"gorm.io/gorm"
 )
 
 const (
@@ -51,31 +53,63 @@ func main() {
 
 	r := echoInit(configs)
 	signal := sigInit(r)
-	// db := dbInit(r, configs)
+	db := dbInit(r, configs)
 	asynqClient := initAsynqClient(configs)
 
-	repoContainer := containers.InitInfrastructureContainer(asynqClient)
+	repoContainer := containers.InitInfrastructureContainer(db, asynqClient)
 	svcContainer := containers.InitApplicationContainer(repoContainer)
 	ctrlContainer := containers.InitControllerContainer(svcContainer, repoContainer)
 
 	if err := initHandler(r, ctrlContainer, signal); err != nil {
-		r.Logger.Error("initHandler Error")
+		zap.S().Errorw("initHandler Error", "err", err)
 		os.Exit(1)
 	}
 
 	if err := initAsynqServer(r, configs, repoContainer); err != nil {
-		r.Logger.Error("initAsynqServer Error")
+		zap.S().Errorw("initAsynqServer Error", "err", err)
 		os.Exit(1)
 	}
 
 	if !configs.GetBool("use_docker_compose") {
 		if err := initAsynqWebUIServer(r, configs); err != nil {
-			r.Logger.Error("initAsynqWebUIServer Error")
+			zap.S().Errorw("initAsynqWebUIServer Error", "err", err)
 			os.Exit(1)
 		}
 	}
 
 	startServer(configs, r)
+}
+
+func dbInit(r *echo.Echo, configs *conf.ViperConfig) *gorm.DB {
+	dbURI := fmt.Sprintf("%s:%s@tcp(%s)/%s?charset=utf8mb4&collation=utf8mb4_unicode_ci&parseTime=True&loc=UTC",
+		configs.GetString("db_user"),
+		configs.GetString("db_pass"),
+		configs.GetString("db_host"),
+		configs.GetString("db_name"),
+	)
+	dbDialector := mysql.Open(dbURI)
+	dbConfig := &gorm.Config{
+		PrepareStmt:            true,
+		SkipDefaultTransaction: true,
+	}
+	dbConn, err := gorm.Open(dbDialector, dbConfig)
+	if err != nil {
+		zap.S().Errorw("dbInit gorm.Open()", "uri", dbURI, "err", err)
+		os.Exit(1)
+	}
+
+	db, err := dbConn.DB()
+	if err != nil {
+		zap.S().Errorw("dbInit dbConn.DB()", "uri", dbURI, "err", err)
+		os.Exit(1)
+	}
+	db.SetMaxIdleConns(100)
+	db.SetMaxOpenConns(1000)
+	db.SetConnMaxLifetime(time.Hour)
+
+	zap.S().Info("dbInit Success")
+
+	return dbConn
 }
 
 func echoInit(configs *conf.ViperConfig) (r *echo.Echo) {

@@ -6,6 +6,10 @@ import (
 	"github.com/spf13/viper"
 )
 
+const (
+	TableDefaultCharset = "DEFAULT CHARSET utf8mb4 COLLATE utf8mb4_unicode_ci"
+)
+
 // ViperConfig ...
 type ViperConfig struct {
 	*viper.Viper
@@ -21,6 +25,10 @@ func init() {
 		"redis_host":         "localhost:6379",
 		"asynqmon_host":      "localhost:8080",
 		"use_docker_compose": false,
+		"db_user":            "root",
+		"db_pass":            "",
+		"db_host":            "localhost:3306",
+		"db_name":            "asynq",
 	})
 }
 
@@ -31,6 +39,8 @@ func readConfig(defaults map[string]interface{}) *ViperConfig {
 	}
 
 	v.AddConfigPath(".././conf")
+	v.AddConfigPath("./conf")
+
 	v.AutomaticEnv()
 	v.SetConfigName(".env.dev")
 

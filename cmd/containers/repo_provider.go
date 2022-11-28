@@ -5,6 +5,7 @@ import (
 	"study-event-go-asynq/infrastructures"
 
 	"github.com/hibiken/asynq"
+	"gorm.io/gorm"
 )
 
 // InfrastructureContainer ...
@@ -13,14 +14,14 @@ type InfrastructureContainer struct {
 	TaskRepo         interfaces.TaskRepository
 }
 
-func newInfrastructureContainer(client *asynq.Client) *InfrastructureContainer {
+func newInfrastructureContainer(db *gorm.DB, client *asynq.Client) *InfrastructureContainer {
 	return &InfrastructureContainer{
-		AnnouncementRepo: infrastructures.NewGormAnnouncementRepository(),
+		AnnouncementRepo: infrastructures.NewGormAnnouncementRepository(db),
 		TaskRepo:         infrastructures.NewTaskRepository(client),
 	}
 }
 
 // InitInfrastructureContainer ...
-func InitInfrastructureContainer(client *asynq.Client) *InfrastructureContainer {
-	return newInfrastructureContainer(client)
+func InitInfrastructureContainer(db *gorm.DB, client *asynq.Client) *InfrastructureContainer {
+	return newInfrastructureContainer(db, client)
 }
