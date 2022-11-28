@@ -2,12 +2,12 @@ package infrastructures
 
 import (
 	"context"
-	"math/rand"
 	"study-event-go-asynq/conf"
 	"study-event-go-asynq/domains"
 	"study-event-go-asynq/domains/interfaces"
 	"study-event-go-asynq/infrastructures/orm"
 
+	"github.com/jinzhu/copier"
 	"go.uber.org/zap"
 	"gorm.io/gorm"
 )
@@ -32,9 +32,18 @@ func NewGormAnnouncementRepository(db *gorm.DB) interfaces.AnnouncementRepositor
 }
 
 func (g *gormAnnouncementRepository) Save(ctx context.Context, announcement *domains.Announcement) (*domains.Announcement, error) {
-	// TODO: use a database
+	ormModel := &orm.Announcement{}
+	if err := copier.Copy(ormModel, announcement); err != nil {
+		zap.S().Errorw("fail to copy from entity", "err", err)
+		return nil, err
+	}
 
-	announcement.ID = rand.Uint64()
+	if err := g.conn.Create(ormModel).Error; err != nil {
+		zap.S().Errorw("fail to insert an announcement", "err", err)
+		return nil, err
+	}
+
+	announcement.ID = ormModel.ID
 
 	return announcement, nil
 }

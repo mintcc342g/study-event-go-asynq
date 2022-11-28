@@ -6,6 +6,7 @@ require (
 	github.com/go-sql-driver/mysql v1.6.0
 	github.com/hibiken/asynq v0.23.0
 	github.com/hibiken/asynqmon v0.7.1
+	github.com/jinzhu/copier v0.3.5
 	github.com/labstack/echo/v4 v4.9.1
 	github.com/spf13/viper v1.14.0
 	go.uber.org/zap v1.21.0
