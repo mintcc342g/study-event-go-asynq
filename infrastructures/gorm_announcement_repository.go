@@ -47,3 +47,32 @@ func (g *gormAnnouncementRepository) Save(ctx context.Context, announcement *dom
 
 	return announcement, nil
 }
+
+func (g *gormAnnouncementRepository) Read(ctx context.Context, id uint64) (*domains.Announcement, error) {
+	ormModel := &orm.Announcement{}
+	if err := g.conn.Model(ormModel).Where("id = ?", id).Find(ormModel).Error; err != nil {
+		zap.S().Errorw("fail to get an announcement", "err", err)
+		return nil, err
+	}
+
+	announcement := &domains.Announcement{}
+	if err := copier.Copy(announcement, ormModel); err != nil {
+		zap.S().Errorw("fail to copy from ormModel", "err", err)
+		return nil, err
+	}
+
+	return announcement, nil
+}
+
+func (g *gormAnnouncementRepository) Update(ctx context.Context, announcement *domains.Announcement) (*domains.Announcement, error) {
+	if err := g.conn.Model(&orm.Announcement{}).
+		Where("id = ?", announcement.ID).
+		Updates(map[string]interface{}{
+			"updated_count": gorm.Expr("updated_count + ?", 1),
+		}).Error; err != nil {
+		zap.S().Errorw("fail to get an announcement", "err", err)
+		return nil, err
+	}
+
+	return announcement, nil
+}

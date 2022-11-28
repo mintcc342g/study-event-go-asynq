@@ -165,7 +165,7 @@ func initAsynqServer(r *echo.Echo, configs *conf.ViperConfig, repoContainer *con
 			// DB:   0, // fixme: test
 		},
 		asynq.Config{
-			Concurrency: 10,
+			Concurrency: 20,
 		},
 	)
 

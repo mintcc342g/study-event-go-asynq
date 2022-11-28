@@ -28,13 +28,18 @@ func NewAnnouncement(ctx context.Context, announcementDTO dto.Announcement) (*An
 	return &Announcement{
 		From:     announcementDTO.From,
 		Message:  announcementDTO.Message,
-		Timeout:  time.Duration(announcementDTO.Seconds * int64(time.Second)),
+		Timeout:  time.Duration(announcementDTO.Seconds) * time.Second,
 		Deadline: announcementDTO.Deadline,
 	}, nil
 }
 
 func (a *Announcement) NewEventPayload() ([]byte, error) {
-	return json.Marshal(a)
+	task := struct { // TODO: use DTO
+		AnnouncementID uint64
+	}{
+		AnnouncementID: a.ID,
+	}
+	return json.Marshal(task)
 }
 
 func (a *Announcement) WithTimeout() bool {
