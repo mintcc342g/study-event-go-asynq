@@ -3,9 +3,7 @@ package workers
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
-	"study-event-go-asynq/domains"
 	"study-event-go-asynq/domains/interfaces"
 	"time"
 
@@ -24,8 +22,16 @@ func NewAnnouncementWorker(announcementRepo interfaces.AnnouncementRepository) *
 }
 
 func (a *AnnouncementWorker) Announce(ctx context.Context, t *asynq.Task) error {
-	var announcement domains.Announcement
-	if err := json.Unmarshal(t.Payload(), &announcement); err != nil {
+	task := struct { // TODO: use DTO?
+		AnnouncementID uint64
+	}{}
+	if err := json.Unmarshal(t.Payload(), &task); err != nil {
+		return err
+	}
+
+	announcement, err := a.announcementRepo.Read(ctx, task.AnnouncementID)
+	if err != nil {
+		zap.S().Errorw("fail to retrieve an announce", "err", err)
 		return err
 	}
 
@@ -39,20 +45,22 @@ func (a *AnnouncementWorker) Announce(ctx context.Context, t *asynq.Task) error 
 }
 
 func (a *AnnouncementWorker) AnnounceWithTime(ctx context.Context, t *asynq.Task) error {
-	var announcement domains.Announcement
-	if err := json.Unmarshal(t.Payload(), &announcement); err != nil {
+	task := struct { // TODO: use DTO?
+		AnnouncementID uint64
+	}{}
+	if err := json.Unmarshal(t.Payload(), &task); err != nil {
 		return err
 	}
 
 	ch := make(chan error, 1)
 	go func() {
-		ch <- a.announceForTime(ctx, announcement)
+		ch <- a.announceForTime(ctx, task.AnnouncementID)
 	}()
 
 	select {
 	case <-ctx.Done():
 		err := ctx.Err()
-		zap.S().Errorw("task is not completed within the time", "announcement_id", announcement.ID, "timeout", announcement.Timeout, "deadline", announcement.Deadline, "err", err.Error())
+		zap.S().Errorw("task is not completed within the time", "taskID", t.ResultWriter().TaskID(), "announcementID", task.AnnouncementID, "err", err.Error())
 		return err
 
 	case taskErr := <-ch:
@@ -63,12 +71,18 @@ func (a *AnnouncementWorker) AnnounceWithTime(ctx context.Context, t *asynq.Task
 	}
 }
 
-func (a *AnnouncementWorker) announceForTime(ctx context.Context, announcement domains.Announcement) error {
-	println("[ANNOUNCEMENT]", fmt.Sprintf("GOT A NEW ANNOUNCEMENT FROM %s.", announcement.From))
-	time.Sleep(1 * time.Second)
-	println("[ANNOUNCEMENT]", "THE MESSAGE IS ...")
-	time.Sleep(1 * time.Second)
-	println("[ANNOUNCEMENT]", "\""+announcement.Message+"\"")
+func (a *AnnouncementWorker) announceForTime(ctx context.Context, announcementID uint64) error {
+	announcement, err := a.announcementRepo.Read(ctx, announcementID)
+	if err != nil {
+		zap.S().Errorw("fail to retrieve an announcement", "id", announcementID, "err", err)
+		return err
+	}
 
-	return errors.New("done~") // for a test
+	announcement, err = a.announcementRepo.Update(ctx, announcement)
+	if err != nil {
+		zap.S().Errorw("fail to update an announcement", "id", announcement.ID, "err", err)
+		return err
+	}
+
+	return nil
 }
