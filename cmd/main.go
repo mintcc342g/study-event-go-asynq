@@ -173,7 +173,7 @@ func initAsynqServer(r *echo.Echo, configs *conf.ViperConfig, repoContainer *con
 
 	mux := asynq.NewServeMux()
 	mux.HandleFunc(consts.AnnouncementTaskKey, announcementWorker.Announce)
-	mux.HandleFunc(consts.AnnouncementTimeTaskKey, announcementWorker.AnnounceWithTime)
+	mux.HandleFunc(consts.AnnouncementTimeTaskKey, workers.TimeoutMiddleware(announcementWorker.AnnounceWithTime))
 
 	go func() {
 		if err := srv.Run(mux); err != nil {
